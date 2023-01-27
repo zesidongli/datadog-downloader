@@ -38,7 +38,7 @@ const initialParams = {
     filterIndex: argv.index ?? "main",
     filterFrom: argv.from ? new Date(argv.from) : oneYearAgo(),
     filterTo: argv.to ? new Date(argv.to) : new Date(),
-    pageLimit: argv.pageSize ? Math.min(argv.pageSize, 5000) : 1000,
+    pageLimit: argv.pageSize ? Math.min(argv.pageSize, 5000) : 5000,
 };
 
 if (!initialParams.filterQuery) {
@@ -57,9 +57,15 @@ console.log(chalk.cyan("Downloading logs:\n" + JSON.stringify(initialParams, nul
         process.exit(1);
     }
 
-    const outputFile = argv.output ?? "results.json";
-    console.log(chalk.cyan(`\nWriting ${data.length} logs to ${outputFile}`));
-    fs.writeFileSync(outputFile, JSON.stringify(data, null, 2));
-
+    const outputFile = argv.output ? argv.output.slice(0, -5) : "results";
+    const chunkSize = argv.logPerFile ?? 50000
+    var j = 0
+    for (let i = 0; i < data.length; i += chunkSize) {
+        const cur_outputFile = outputFile + j + '.json'
+        const cur_data = data.slice(i, i + chunkSize)
+        console.log(chalk.cyan(`\nWriting ${cur_data.length} logs to ${cur_outputFile}`));
+        fs.writeFileSync(cur_outputFile, JSON.stringify(cur_data, null, 2));
+        j += 1
+    }
     console.log(chalk.green("Done!"));
 })();
